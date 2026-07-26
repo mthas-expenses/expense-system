@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}مصروفاتي - نظام المصروفات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>مصروفاتي</h2>
+    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">+ إضافة مصروف جديد</a>
+</div>
+
+{% if expenses %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>الرقم</th>
+                <th>التاريخ</th>
+                <th>الفرع</th>
+                <th>النوع</th>
+                <th>البيان</th>
+                <th>المبلغ</th>
+                <th>الفاتورة</th>
+                <th>الحالة</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td><strong>{{ e.ref_number }}</strong></td>
+                <td>{{ e.date }}</td>
+                <td>{{ e.branch }}</td>
+                <td><span class="type-badge">{{ e.expense_type }}</span></td>
+                <td title="{{ e.description }}">{{ e.description[:40] }}{% if e.description|length > 40 %}...{% endif %}</td>
+                <td><strong>{{ "{:,.0f}".format(e.amount) }}</strong></td>
+                <td>
+                    {% if e.invoice_filename %}
+                    <a href="{{ url_for('uploaded_file', filename=e.invoice_filename) }}" target="_blank" class="btn btn-sm">عرض</a>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if e.status == 'pending_fm' %}
+                    <span class="status-badge fm-reviewing">قيد مراجعة المدير المالي</span>
+                    {% elif e.status == 'pending_gm' %}
+                    <span class="status-badge fm-approved">بانتظار المدير العام</span>
+                    {% elif e.status == 'pending_payment' %}
+                    <span class="status-badge pending-payment">تم التصديق - بانتظار الصرف</span>
+                    {% elif e.status == 'paid' %}
+                    <span class="status-badge paid">تم الصرف</span>
+                    {% elif e.status == 'fm_rejected' %}
+                    <span class="status-badge fm-rejected">مرفوض من المدير المالي</span>
+                    {% elif e.status == 'gm_rejected' %}
+                    <span class="status-badge gm-rejected">مرفوض من المدير العام</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if e.status == 'pending_fm' %}
+                    <form method="POST" action="{{ url_for('delete_expense', ref=e.ref_number) }}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                        <button type="submit" class="btn btn-sm btn-danger">حذف</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="summary-bar">
+    الإجمالي: <strong>{{ "{:,.0f}".format(expenses|map(attribute='amount')|sum) }}</strong> رس |
+    العدد: <strong>{{ expenses|length }}</strong>
+</div>
+{% else %}
+<div class="empty-state">لا توجد مصروفات مسجلة بعد</div>
+{% endif %}
+
+{% endblock %}

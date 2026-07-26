@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}أنواع المصروفات - الإعدادات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>إدارة أنواع المصروفات</h2>
+</div>
+
+<div class="card" style="max-width:500px; margin-bottom:15px;">
+    <h3>إضافة نوع جديد</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label>اسم النوع</label>
+            <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+            <label>الوصف</label>
+            <input type="text" name="description">
+        </div>
+        <button type="submit" class="btn btn-primary">إضافة</button>
+    </form>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr><th>#</th><th>اسم النوع</th><th>الوصف</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for t in types %}
+            <tr>
+                <td>{{ t.id }}</td>
+                <td><strong>{{ t.name }}</strong></td>
+                <td class="text-muted">{{ t.description or '—' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_delete_type', tid=t.id) }}" style="display:inline" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                        <button type="submit" class="btn btn-sm btn-danger">حذف</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

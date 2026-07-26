@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة المصروفات{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if session.get('user_id') %}
+    <nav class="navbar">
+        <div class="nav-right">
+            <a href="{{ url_for('dashboard') }}" class="nav-brand">نظام المصروفات</a>
+            <div class="nav-links">
+                <a href="{{ url_for('dashboard') }}">الرئيسية</a>
+
+                {% if session.role in ['accountant', 'admin'] %}
+                <a href="{{ url_for('add_expense') }}">+ إضافة مصروف</a>
+                <a href="{{ url_for('my_expenses') }}">مصروفاتي</a>
+                {% endif %}
+
+                {% if session.role in ['finance_manager', 'admin'] %}
+                <a href="{{ url_for('fm_review') }}" class="nav-badge">
+                    مراجعة المصروفات
+                    {% if pending_fm_count is defined and pending_fm_count > 0 %}
+                    <span class="badge">{{ pending_fm_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('fm_payment') }}" class="nav-badge">
+                    التحويل المالي
+                    {% if pending_payment_count is defined and pending_payment_count > 0 %}
+                    <span class="badge">{{ pending_payment_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('fm_paid') }}">الصرف</a>
+                <a href="{{ url_for('fm_all') }}">كل المصروفات</a>
+                {% endif %}
+
+                {% if session.role in ['general_manager', 'admin'] %}
+                <a href="{{ url_for('gm_review') }}" class="nav-badge">
+                    اعتماد المصروفات
+                    {% if pending_gm_count is defined and pending_gm_count > 0 %}
+                    <span class="badge">{{ pending_gm_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('gm_all') }}">كل المصروفات</a>
+                {% endif %}
+
+                <a href="{{ url_for('reports') }}">التقارير</a>
+
+                {% if session.role == 'admin' %}
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-btn">الإعدادات ▾</button>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ url_for('admin_users') }}">المستخدمون</a>
+                        <a href="{{ url_for('admin_types') }}">أنواع المصروفات</a>
+                        <a href="{{ url_for('admin_branches') }}">الفروع</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="nav-left">
+            <span class="nav-user">{{ session.full_name }}</span>
+            <span class="nav-role role-{{ session.role }}">{{ {
+                'accountant': 'محاسب',
+                'finance_manager': 'مدير مالي',
+                'general_manager': 'مدير عام',
+                'admin': 'مدير نظام'
+            }[session.role] }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-logout">خروج</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+    document.querySelectorAll('.nav-dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.target.parentElement.classList.toggle('open');
+        });
+    });
+    document.querySelectorAll('.flash').forEach(el => {
+        setTimeout(() => el.style.display = 'none', 4000);
+    });
+    </script>
+</body>
+</html>

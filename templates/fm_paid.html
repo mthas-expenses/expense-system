@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}الصرف - المدير المالي{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>المصروفات المدفوعة / المحولة</h2>
+    <p class="text-muted">جميع المصروفات التي تم تحويلها/صرفها فعلياً</p>
+</div>
+
+{% if expenses %}
+<div class="summary-bar">
+    الإجمالي: <strong>{{ "{:,.0f}".format(total) }}</strong> رس |
+    العدد: <strong>{{ expenses|length }}</strong>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>الرقم</th>
+                <th>التاريخ</th>
+                <th>الفرع</th>
+                <th>النوع</th>
+                <th>البيان</th>
+                <th>المبلغ</th>
+                <th>المقدم</th>
+                <th>طريقة الصرف</th>
+                <th>رقم المرجع</th>
+                <th>تاريخ الصرف</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td><strong>{{ e.ref_number }}</strong></td>
+                <td>{{ e.date }}</td>
+                <td>{{ e.branch }}</td>
+                <td><span class="type-badge">{{ e.expense_type }}</span></td>
+                <td title="{{ e.description }}">{{ e.description[:30] }}{% if e.description|length > 30 %}...{% endif %}</td>
+                <td><strong>{{ "{:,.0f}".format(e.amount) }}</strong></td>
+                <td>{{ e.requester_name }}</td>
+                <td>{{ e.payment_method_used or '—' }}</td>
+                <td>{{ e.payment_reference or '—' }}</td>
+                <td>{{ e.payment_date[:10] if e.payment_date else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="summary-bar">
+    الإجمالي: <strong>{{ "{:,.0f}".format(expenses|map(attribute='amount')|sum) }}</strong> رس |
+    العدد: <strong>{{ expenses|length }}</strong>
+</div>
+{% else %}
+<div class="empty-state">لا توجد مصروفات مدفوعة بعد</div>
+{% endif %}
+
+{% endblock %}

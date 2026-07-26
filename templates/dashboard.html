@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}الرئيسية - نظام المصروفات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>لوحة التحكم</h2>
+    <p class="text-muted">مرحباً {{ session.full_name }}</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card blue">
+        <div class="kpi-icon">الإجمالي</div>
+        <div class="kpi-value">{{ "{:,.0f}".format(stats.total) }}</div>
+        <div class="kpi-label">رس - إجمالي المصروفات</div>
+    </div>
+    <div class="kpi-card green">
+        <div class="kpi-icon">اليوم</div>
+        <div class="kpi-value">{{ "{:,.0f}".format(stats.today_total) }}</div>
+        <div class="kpi-label">رس - مصروفات اليوم</div>
+    </div>
+    <div class="kpi-card orange">
+        <div class="kpi-icon">الشهر</div>
+        <div class="kpi-value">{{ "{:,.0f}".format(stats.month_total) }}</div>
+        <div class="kpi-label">رس - مصروفات الشهر</div>
+    </div>
+    <div class="kpi-card red">
+        <div class="kpi-icon">المتوسط</div>
+        <div class="kpi-value">{{ "{:,.0f}".format(stats.avg) }}</div>
+        <div class="kpi-label">رس - متوسط المصروف</div>
+    </div>
+</div>
+
+<!-- Status Cards -->
+<div class="status-grid">
+    <div class="status-card fm-reviewing">
+        <div class="status-num">{{ stats.status_counts.get('pending_fm', 0) }}</div>
+        <div class="status-label">قيد مراجعة المدير المالي</div>
+    </div>
+    <div class="status-card fm-approved">
+        <div class="status-num">{{ stats.status_counts.get('pending_gm', 0) }}</div>
+        <div class="status-label">بانتظار المدير العام</div>
+    </div>
+    <div class="status-card pending-payment">
+        <div class="status-num">{{ stats.status_counts.get('pending_payment', 0) }}</div>
+        <div class="status-label">تم التصديق - بانتظار الصرف</div>
+        <div class="status-amount">{{ "{:,.0f}".format(stats.status_amounts.get('pending_payment', 0)) }} رس</div>
+    </div>
+    <div class="status-card paid">
+        <div class="status-num">{{ stats.status_counts.get('paid', 0) }}</div>
+        <div class="status-label">تم الصرف</div>
+        <div class="status-amount">{{ "{:,.0f}".format(stats.status_amounts.get('paid', 0)) }} رس</div>
+    </div>
+    <div class="status-card fm-rejected">
+        <div class="status-num">{{ stats.status_counts.get('fm_rejected', 0) }}</div>
+        <div class="status-label">مرفوض من المدير المالي</div>
+    </div>
+    <div class="status-card gm-rejected">
+        <div class="status-num">{{ stats.status_counts.get('gm_rejected', 0) }}</div>
+        <div class="status-label">مرفوض من المدير العام</div>
+    </div>
+</div>
+
+<!-- Payment Breakdown by Expense Type -->
+<div class="card" style="margin-bottom:15px;">
+    <h3>حالة الصرف حسب بند المصروف</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>بند المصروف</th>
+                    <th>بانتظار الصرف</th>
+                    <th>تم الصرف</th>
+                    <th>الإجمالي المعتمد</th>
+                    <th>نسبة الصرف</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tname, data in stats.type_breakdown.items() %}
+                <tr>
+                    <td><strong>{{ tname }}</strong></td>
+                    <td>
+                        <span class="payment-pending">{{ "{:,.0f}".format(data.pending_payment) }} رس</span>
+                    </td>
+                    <td>
+                        <span class="payment-done">{{ "{:,.0f}".format(data.paid) }} رس</span>
+                    </td>
+                    <td><strong>{{ "{:,.0f}".format(data.total_approved) }} رس</strong></td>
+                    <td>
+                        {% set pct = (data.paid / data.total_approved * 100) if data.total_approved > 0 else 0 %}
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:{{ pct|int }}%"></div>
+                        </div>
+                        <span class="progress-text">{{ pct|int }}%</span>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not stats.type_breakdown %}
+                <tr><td colspan="5" class="text-muted">لا توجد بيانات</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Payment Breakdown by Branch -->
+<div class="card" style="margin-bottom:15px;">
+    <h3>حالة الصرف حسب الفرع</h3>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>الفرع</th>
+                    <th>بانتظار الصرف</th>
+                    <th>تم الصرف</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bname, bdata in stats.branch_breakdown.items() %}
+                <tr>
+                    <td><strong>{{ bname }}</strong></td>
+                    <td><span class="payment-pending">{{ "{:,.0f}".format(bdata.pending_payment) }} رس</span></td>
+                    <td><span class="payment-done">{{ "{:,.0f}".format(bdata.paid) }} رس</span></td>
+                </tr>
+                {% endfor %}
+                {% if not stats.branch_breakdown %}
+                <tr><td colspan="3" class="text-muted">لا توجد بيانات</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid-2">
+    <!-- Branches -->
+    <div class="card">
+        <h3>أعلى الفروع صرفاً</h3>
+        <div class="bar-chart">
+            {% if stats.branch_totals %}
+            {% set max_b = stats.branch_totals[0][1] if stats.branch_totals else 1 %}
+            {% for name, total in stats.branch_totals[:5] %}
+            <div class="bar-item">
+                <span class="bar-label">{{ name }}</span>
+                <div class="bar-fill" style="width: {{ (total / max_b * 80) | int }}%"></div>
+                <span class="bar-val">{{ "{:,.0f}".format(total) }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-muted">لا توجد بيانات</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Types -->
+    <div class="card">
+        <h3>أعلى أنواع المصروفات</h3>
+        <div class="bar-chart">
+            {% if stats.type_totals %}
+            {% set max_t = stats.type_totals[0][1] if stats.type_totals else 1 %}
+            {% for name, total in stats.type_totals[:8] %}
+            <div class="bar-item">
+                <span class="bar-label">{{ name }}</span>
+                <div class="bar-fill green" style="width: {{ (total / max_t * 80) | int }}%"></div>
+                <span class="bar-val">{{ "{:,.0f}".format(total) }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-muted">لا توجد بيانات</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Chart -->
+<div class="card" style="margin-top:15px;">
+    <h3>المصروفات الشهرية</h3>
+    <div class="monthly-chart">
+        {% if stats.monthly %}
+        {% set max_m = stats.monthly | map(attribute=1) | max %}
+        {% for month, total in stats.monthly %}
+        <div class="month-bar">
+            <div class="month-fill" style="height: {{ (total / max_m * 100) if max_m else 0 }}%"></div>
+            <div class="month-label">{{ month[2:] }}</div>
+            <div class="month-val">{{ "{:,.0f}".format(total) }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted" style="text-align:center;padding:20px;">لا توجد بيانات كافية</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Workflow Info -->
+<div class="card" style="margin-top:15px;">
+    <h3>مسار العمل الكامل</h3>
+    <div class="workflow-flow">
+        <div class="wf-step">
+            <div class="wf-icon acc">1</div>
+            <div class="wf-text">المحاسب<br><small>إدخال المصروف</small></div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+            <div class="wf-icon fm">2</div>
+            <div class="wf-text">المدير المالي<br><small>مراجعة وتصديق مبدئي</small></div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+            <div class="wf-icon gm">3</div>
+            <div class="wf-text">المدير العام<br><small>تصديق نهائي</small></div>
+        </div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-step">
+            <div class="wf-icon pay">4</div>
+            <div class="wf-text">المدير المالي<br><small>تحويل / صرف فعلي</small></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

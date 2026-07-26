@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+expense.db
+uploads/*
+!uploads/.gitkeep
+.env
+*.log
+cloudflared.exe
+tunnel_error.txt
+tunnel_output.txt

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}المستخدمون - الإعدادات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>إدارة المستخدمين</h2>
+</div>
+
+<div class="card" style="max-width:500px; margin-bottom:15px;">
+    <h3>إضافة مستخدم جديد</h3>
+    <form method="POST" action="{{ url_for('admin_add_user') }}">
+        <div class="form-group">
+            <label>اسم المستخدم</label>
+            <input type="text" name="username" required>
+        </div>
+        <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label>الاسم الكامل</label>
+            <input type="text" name="full_name" required>
+        </div>
+        <div class="form-group">
+            <label>الدور</label>
+            <select name="role" required>
+                <option value="accountant">محاسب</option>
+                <option value="finance_manager">مدير مالي</option>
+                <option value="general_manager">مدير عام</option>
+                <option value="admin">مدير نظام</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">إضافة</button>
+    </form>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>المعرف</th>
+                <th>الاسم</th>
+                <th>اسم المستخدم</th>
+                <th>الدور</th>
+                <th>الحالة</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>{{ u.full_name }}</td>
+                <td><code>{{ u.username }}</code></td>
+                <td>
+                    <span class="role-badge role-{{ u.role }}">{{ {
+                        'accountant': 'محاسب',
+                        'finance_manager': 'مدير مالي',
+                        'general_manager': 'مدير عام',
+                        'admin': 'مدير نظام'
+                    }[u.role] }}</span>
+                </td>
+                <td>
+                    {% if u.active %}
+                    <span class="status-badge approved">نشط</span>
+                    {% else %}
+                    <span class="status-badge gm-rejected">معطل</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_toggle_user', uid=u.id) }}" style="display:inline">
+                        <button type="submit" class="btn btn-sm">{% if u.active %}تعطيل{% else %}تفعيل{% endif %}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

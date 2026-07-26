@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}التقارير - نظام المصروفات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>التقارير</h2>
+</div>
+
+<div class="card" style="margin-bottom:15px;">
+    <form method="GET" class="filter-form">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>من تاريخ</label>
+                <input type="date" name="date_from" value="{{ filters.date_from }}">
+            </div>
+            <div class="filter-group">
+                <label>إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ filters.date_to }}">
+            </div>
+            <div class="filter-group">
+                <label>الفرع</label>
+                <select name="branch">
+                    <option value="">الكل</option>
+                    {% for b in branches %}
+                    <option value="{{ b.name }}" {% if filters.branch == b.name %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>النوع</label>
+                <select name="expense_type">
+                    <option value="">الكل</option>
+                    {% for t in types %}
+                    <option value="{{ t.name }}" {% if filters.expense_type == t.name %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>الحالة</label>
+                <select name="status">
+                    <option value="">الكل</option>
+                    <option value="pending_fm" {% if filters.status == 'pending_fm' %}selected{% endif %}>قيد مراجعة المدير المالي</option>
+                    <option value="pending_gm" {% if filters.status == 'pending_gm' %}selected{% endif %}>بانتظار المدير العام</option>
+                    <option value="pending_payment" {% if filters.status == 'pending_payment' %}selected{% endif %}>تم التصديق - بانتظار الصرف</option>
+                    <option value="paid" {% if filters.status == 'paid' %}selected{% endif %}>تم الصرف</option>
+                    <option value="fm_rejected" {% if filters.status == 'fm_rejected' %}selected{% endif %}>مرفوض من المدير المالي</option>
+                    <option value="gm_rejected" {% if filters.status == 'gm_rejected' %}selected{% endif %}>مرفوض من المدير العام</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">بحث</button>
+    </form>
+</div>
+
+{% if expenses %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>الرقم</th>
+                <th>التاريخ</th>
+                <th>الفرع</th>
+                <th>النوع</th>
+                <th>البيان</th>
+                <th>المبلغ</th>
+                <th>المقدم</th>
+                <th>الحالة</th>
+                <th>الفاتورة</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td><strong>{{ e.ref_number }}</strong></td>
+                <td>{{ e.date }}</td>
+                <td>{{ e.branch }}</td>
+                <td><span class="type-badge">{{ e.expense_type }}</span></td>
+                <td title="{{ e.description }}">{{ e.description[:30] }}{% if e.description|length > 30 %}...{% endif %}</td>
+                <td><strong>{{ "{:,.0f}".format(e.amount) }}</strong></td>
+                <td>{{ e.requester_name }}</td>
+                <td>
+                    {% if e.status == 'pending_fm' %}
+                    <span class="status-badge fm-reviewing">قيد المراجعة</span>
+                    {% elif e.status == 'pending_gm' %}
+                    <span class="status-badge fm-approved">موافقة مبدئية</span>
+                    {% elif e.status == 'pending_payment' %}
+                    <span class="status-badge pending-payment">بانتظار الصرف</span>
+                    {% elif e.status == 'paid' %}
+                    <span class="status-badge paid">تم الصرف</span>
+                    {% elif e.status == 'fm_rejected' %}
+                    <span class="status-badge fm-rejected">مرفوض (مالي)</span>
+                    {% elif e.status == 'gm_rejected' %}
+                    <span class="status-badge gm-rejected">مرفوض (عام)</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if e.invoice_filename %}
+                    <a href="{{ url_for('uploaded_file', filename=e.invoice_filename) }}" target="_blank" class="btn btn-sm">عرض</a>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="summary-bar">
+    الإجمالي: <strong>{{ "{:,.0f}".format(total) }}</strong> رس |
+    العدد: <strong>{{ expenses|length }}</strong>
+</div>
+{% else %}
+<div class="empty-state">لا توجد نتائج مطابقة للفلاتر المحددة</div>
+{% endif %}
+
+{% endblock %}

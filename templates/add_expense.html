@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}إضافة مصروف - نظام المصروفات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>إضافة مصروف جديد</h2>
+    <p class="text-muted">المرحلة 1: المحاسب → المدير المالي → المدير العام</p>
+</div>
+
+<div class="card" style="max-width:650px; margin:0 auto;">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-row">
+            <div class="form-group">
+                <label>التاريخ *</label>
+                <input type="date" name="date" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label>الفرع *</label>
+                <select name="branch" required>
+                    <option value="">اختر الفرع</option>
+                    {% for b in branches %}
+                    <option value="{{ b.name }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>نوع المصروف *</label>
+                <select name="expense_type" required>
+                    <option value="">اختر النوع</option>
+                    {% for t in types %}
+                    <option value="{{ t.name }}">{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>المبلغ (رس) *</label>
+                <input type="number" name="amount" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>بيان المصروف *</label>
+            <textarea name="description" rows="3" placeholder="وصف المصروف بالتفصيل" required></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>طريقة الدفع</label>
+                <select name="payment_method">
+                    <option value="نقدي">نقدي</option>
+                    <option value="شيك">شيك</option>
+                    <option value="تحويل بنكي">تحويل بنكي</option>
+                    <option value="بطاقة">بطاقة ائتمان</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>إرفاق الفاتورة / الطلب</label>
+                <input type="file" name="invoice" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+                <small class="text-muted">PDF, صور, أو ملفات Office - حد أقصى 16MB</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>ملاحظات</label>
+            <textarea name="notes" rows="2" placeholder="ملاحظات إضافية (اختياري)"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">حفظ المصروف</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}التحويل المالي - المدير المالي{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <h2>التحويل المالي / الصرف</h2>
+    <p class="text-muted">مصروفات تم التصديق عليها نهائياً ولم يتم تحويلها/صرفها بعد</p>
+</div>
+
+<div class="summary-cards">
+    <div class="mini-card orange">
+        <div class="mini-num">{{ expenses|length }}</div>
+        <div class="mini-label">بانتظار التحويل</div>
+    </div>
+    <div class="mini-card blue">
+        <div class="mini-num">{{ "{:,.0f}".format(expenses|map(attribute='amount')|sum) }}</div>
+        <div class="mini-label">إجمالي المبالغ</div>
+    </div>
+</div>
+
+{% if expenses %}
+{% for e in expenses %}
+<div class="review-card payment-card">
+    <div class="review-header payment-header">
+        <span class="review-ref">{{ e.ref_number }}</span>
+        <span class="type-badge">{{ e.expense_type }}</span>
+        <span class="payment-date-badge">تم التصديق: {{ e.gm_review_date[:10] if e.gm_review_date else '—' }}</span>
+        <span class="review-date">{{ e.date }}</span>
+    </div>
+    <div class="review-body">
+        <div class="review-info">
+            <div><strong>الفرع:</strong> {{ e.branch }}</div>
+            <div><strong>المبلغ:</strong> <span class="amount">{{ "{:,.0f}".format(e.amount) }} رس</span></div>
+            <div><strong>المقدم:</strong> {{ e.requester_name }}</div>
+            <div><strong>طريقة الدفع المطلوبة:</strong> {{ e.payment_method }}</div>
+        </div>
+        <div class="review-desc">
+            <strong>البيان:</strong> {{ e.description }}
+        </div>
+        {% if e.gm_notes %}
+        <div class="review-gm-notes">
+            <strong>ملاحظات المدير العام:</strong> {{ e.gm_notes }}
+        </div>
+        {% endif %}
+        {% if e.invoice_filename %}
+        <div class="review-attachment">
+            <a href="{{ url_for('uploaded_file', filename=e.invoice_filename) }}" target="_blank" class="btn btn-sm">عرض الفاتورة</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="review-actions payment-actions">
+        <form method="POST" action="{{ url_for('fm_pay', ref=e.ref_number) }}" class="pay-form" onsubmit="return confirm('تأكيد التحويل/الصرف للمصروف {{ e.ref_number }}؟')">
+            <div class="pay-row">
+                <div class="form-group" style="margin-bottom:0">
+                    <label>طريقة الصرف *</label>
+                    <select name="payment_method_used" required>
+                        <option value="">اختر</option>
+                        <option value="تحويل بنكي">تحويل بنكي</option>
+                        <option value="شيك">شيك</option>
+                        <option value="نقدي">نقدي</option>
+                        <option value="دفع إلكتروني">دفع إلكتروني</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label>رقم المرجع / الحوالة</label>
+                    <input type="text" name="payment_reference" placeholder="رقم التحويل / الشيك">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                    <label>ملاحظات الصرف</label>
+                    <input type="text" name="paid_notes" placeholder="ملاحظات">
+                </div>
+                <button type="submit" class="btn btn-success">تحويل / صرف</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">لا توجد مصروفات بانتظار التحويل المالي</div>
+{% endif %}
+
+{% endblock %}
